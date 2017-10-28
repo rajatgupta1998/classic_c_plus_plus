@@ -1,0 +1,115 @@
+#include <iostream>
+#include<stdlib.h>
+#include <stdio.h>
+#include <fstream>
+#include <string.h>
+#include <ctime>
+#include <conio.h>
+#include <dos.h>
+#include <graphics.h>
+
+using namespace std;
+
+double xCoord[1000];
+double yCoords[1000];
+
+typedef struct place
+{
+    char* serv_interest;
+    double locX,locY;
+    double price;
+    double rating;
+    char *avail;
+    struct place *prevAddr;
+} obj_place;
+
+obj_place *tosp;
+
+ifstream infile_services("services.txt");
+fstream infile_avail("avail.txt",ios::in|ios::out);
+fstream infile_ratings("ratings.txt",ios::in|ios::out);
+
+char* get_sys_time()         // Get Current System Time
+{
+   time_t now = time(0);
+   char* dt = ctime(&now);
+   return dt;
+}
+
+void input_place()
+{
+    obj_place *newAddr;
+    while(1)
+    {
+        newAddr=(obj_place *)malloc(sizeof(obj_place));
+        newAddr->serv_interest=(char *)calloc(sizeof(char),1024);
+        infile_services >> newAddr->serv_interest;
+        newAddr->avail=(char *)calloc(sizeof(char),1024);
+        infile_avail >>newAddr->avail;
+
+        infile_services >> newAddr->price;
+
+        if(newAddr->price<0)
+           break;
+
+        infile_ratings >>newAddr->rating;
+        newAddr->prevAddr=tosp;
+        tosp=newAddr;
+    }
+}
+
+void plot_map()
+{
+    obj_place *tempAddr;
+    while(tosp!=NULL)
+    {
+        puts(tosp->serv_interest);
+        puts(tosp->avail);
+        cout << tosp->price << endl;
+        cout  << tosp->rating << endl;
+        tempAddr=tosp->prevAddr;
+        free(tosp);
+        tosp=tempAddr;
+    }
+}
+
+void plot_user()
+{
+    cout << "<-- Enter Your Location Coordinates --->\n\n";
+    cout << "\t\t x: ";
+    cin >> xCoord[0];
+    printf("\t\t y: ");
+    cin >> yCoords[0];
+}
+
+int main()
+{
+    char *currTime=get_sys_time();
+
+    plot_user();
+
+    int gd = DETECT, gm, x, y, angle = 0;
+    struct arccoordstype a;
+    char driver[] = " ";
+    initgraph(&gd, &gm,driver);
+
+    circle(xCoord[0],yCoords[0],10);
+    setfillstyle(SOLID_FILL,RED);
+    floodfill(xCoord[0],yCoords[0],WHITE);
+    delay(5000);
+    cin.get();
+    closegraph();
+
+    tosp=NULL;
+
+    if(infile_services.fail()||infile_ratings.fail()||infile_avail.fail())
+        exit(1);
+
+
+    input_place();
+    plot_map();
+
+
+    cout << currTime <<endl;
+    return 0;
+}
